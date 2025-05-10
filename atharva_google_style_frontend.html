@@ -1,0 +1,147 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ATHARV - Search Redefined</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        header {
+            margin-top: 80px;
+            font-size: 64px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .logo span:nth-child(1) { color: #4285F4; }
+        .logo span:nth-child(2) { color: #EA4335; }
+        .logo span:nth-child(3) { color: #FBBC05; }
+        .logo span:nth-child(4) { color: #34A853; }
+        .logo span:nth-child(5) { color: #EA4335; }
+        .logo span:nth-child(6) { color: #4285F4; }
+        .logo span:nth-child(7) { color: #FBBC05; }
+
+        main {
+            text-align: center;
+            margin-top: 40px;
+        }
+        input[type="text"] {
+            width: 600px;
+            padding: 16px;
+            font-size: 18px;
+            border: 1px solid #dcdcdc;
+            border-radius: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            outline: none;
+        }
+        button {
+            margin-left: 10px;
+            padding: 14px 28px;
+            font-size: 16px;
+            border: none;
+            border-radius: 30px;
+            background-color: #4285F4;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        button:hover {
+            background-color: #3367d6;
+        }
+        #results {
+            margin-top: 40px;
+            width: 70%;
+            max-width: 800px;
+        }
+        .result-card {
+            background: #f8f9fa;
+            padding: 24px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: left;
+            margin-bottom: 20px;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+        #uploadSection {
+            margin-top: 40px;
+        }
+        input[type="file"] {
+            margin-top: 10px;
+        }
+        #uploadStatus {
+            color: green;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header class="logo">
+        <span>A</span><span>T</span><span>H</span><span>A</span><span>R</span><span>V</span>
+    </header>
+    <main>
+        <div>
+            <input type="text" id="query" placeholder="Ask Atharv anything...">
+            <button onclick="submitQuery()">Search</button>
+        </div>
+
+        <div id="results"></div>
+
+        <div id="uploadSection">
+            <h3>Upload document (optional)</h3>
+            <input type="file" id="docUpload" />
+            <button onclick="uploadDoc()">Upload</button>
+            <p id="uploadStatus"></p>
+        </div>
+    </main>
+
+    <script>
+        let docUploaded = false;
+
+        async function submitQuery() {
+            const query = document.getElementById("query").value;
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = '<p>Loading...</p>';
+
+            const endpoint = docUploaded ? '/rag-query' : '/search';
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query })
+            });
+            const data = await response.json();
+            resultsDiv.innerHTML = '';
+            const card = document.createElement('div');
+            card.className = 'result-card';
+            card.innerHTML = `<strong>Answer:</strong><br>${data.answer}`;
+            resultsDiv.appendChild(card);
+        }
+
+        async function uploadDoc() {
+            const input = document.getElementById('docUpload');
+            const formData = new FormData();
+            formData.append('file', input.files[0]);
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            if (data.message.includes("successfully")) {
+                docUploaded = true;
+                document.getElementById("uploadStatus").textContent = "Document uploaded and ready!";
+            } else {
+                docUploaded = false;
+                document.getElementById("uploadStatus").textContent = "Upload failed.";
+            }
+        }
+    </script>
+</body>
+</html>
